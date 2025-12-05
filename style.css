@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap');
 
 :root{
     --orange:#f9ba60;
@@ -7,22 +7,24 @@
     --white: #fff;
     --light-color:#666;
     --box-shadow:0 .5rem 1.5rem rgba(0,0,0,.1);
+    --border-radius: 1.5rem;
 }
 
 *{
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Noto Sans', sans-serif;
   margin: 0; padding: 0;
   box-sizing: border-box;
   outline: none; border: none;
   text-decoration: none;
   text-transform: capitalize;
-  transition: all .2s linear;
+  transition: all .3s ease;
 }
 
 html{
   font-size: 62.5%;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  scroll-padding-top: 8rem;
 }
 
 section{
@@ -47,17 +49,21 @@ section{
   font-size: 1.7rem;
   margin-top: 1rem;
   display: inline-block;
-  padding: .8rem 3rem;
-  border-radius: .5rem;
+  padding: 1rem 3rem;
+  border-radius: var(--border-radius);
   border: .2rem solid var(--orange);
   color: var(--orange);
   background: none;
   cursor: pointer;
+  font-weight: 500;
+  box-shadow: 0 0 0 rgba(249, 186, 96, 0);
 }
 
 .btn:hover{
   background: var(--orange);
   color: var(--white);
+  transform: translateY(-3px);
+  box-shadow: 0 1rem 2rem rgba(249, 186, 96, 0.3);
 }
 
 /* header */
@@ -88,11 +94,34 @@ section{
   font-size: 1.7rem;
   margin: 0 1rem;
   color: var(--black);
+  font-weight: 500;
+  position: relative;
+}
+
+.header .navbar a::after{
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 80%;
+  height: 2px;
+  background: var(--orange);
+  transition: transform 0.3s ease;
+}
+
+.header .navbar a:hover::after{
+  transform: translateX(-50%) scaleX(1);
 }
 
 .header .navbar a:hover,
 .header .icons div:hover{
   color: var(--orange);
+}
+
+.header .icons{
+  display: flex;
+  align-items: center;
 }
 
 .header .icons div{
@@ -104,6 +133,12 @@ section{
 
 #menu-btn{
   display: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#menu-btn:hover{
+  transform: scale(1.1);
 }
 
 .header .login-form{
@@ -180,8 +215,9 @@ section{
 .home .content p{
   font-size: 1.7rem;
   color: var(--light-color);
-  line-height: 1.8;
+  line-height: 2;
   padding: 1rem 0;
+  font-weight: 400;
 }
 
 .home .image{
@@ -249,10 +285,12 @@ section{
 }
 
 .about .row .content p{
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   color: var(--white);
   padding: 1rem 0;
-  line-height: 2;
+  line-height: 2.2;
+  font-weight: 400;
+  text-align: justify;
 }
 
 /* end */
@@ -272,6 +310,12 @@ section{
   outline: .1rem solid rgba(0,0,0,.1);
   outline-offset: -1rem;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.education .box-container .box:hover{
+  transform: translateY(-10px);
+  box-shadow: 0 1rem 3rem rgba(0,0,0,.2);
 }
 
 .education .box-container .box:hover img{
@@ -328,6 +372,12 @@ section{
   text-align: center;
   box-shadow: var(--box-shadow);
   border-radius: 2rem;
+  transition: all 0.3s ease;
+}
+
+.teacher .box-container .box:hover{
+  transform: translateY(-10px);
+  box-shadow: 0 1rem 3rem rgba(0,0,0,.2);
 }
 
 .teacher .box-container .box img{
@@ -382,14 +432,22 @@ section{
   border-radius: 2rem;
   outline: .1rem solid rgba(0,0,0,.1);
   outline-offset: -1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.activities .box-container .box:hover{
+  transform: translateY(-5px);
+  box-shadow: 0 1rem 2.5rem rgba(0,0,0,.15);
 }
 
 .activities .box-container .box img{
   height: 8rem;
+  transition: all 0.3s ease;
 }
 
 .activities .box-container .box:hover img{
-  transform: scale(1.1);
+  transform: scale(1.2) rotate(5deg);
 }
 
 .activities .box-container .box h3{
@@ -467,6 +525,13 @@ section{
   text-align: center;
   outline: .1rem solid rgba(0,0,0,.1);
   outline-offset: -1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.contact .icons-container .icons:hover{
+  transform: translateY(-5px);
+  box-shadow: 0 1rem 2.5rem rgba(0,0,0,.15);
 }
 
 .contact .icons-container .icons i{
@@ -477,6 +542,12 @@ section{
   line-height: 6rem;
   border-radius: 50%;
   background: var(--orange);
+  transition: all 0.3s ease;
+}
+
+.contact .icons-container .icons:hover i{
+  transform: scale(1.1) rotate(10deg);
+  background: var(--pink);
 }
 
 .contact .icons-container .icons h3{
@@ -676,33 +747,76 @@ attestation styles
 
   .header .navbar{
     position: absolute;
-    top: 110%; right: -110%;
+    top: 110%;
+    right: -100%;
     width: 30rem;
-    box-shadow: var(--box-shadow);
-    border-radius: .5rem;
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.2);
+    border-radius: var(--border-radius);
     background: var(--white);
+    padding: 2rem 0;
+    opacity: 0;
+    visibility: hidden;
   }
 
   .header .navbar.active{
     right: 2rem;
-    transition: .4s linear;
+    opacity: 1;
+    visibility: visible;
+    transition: all .4s ease;
   }
 
   .header .navbar a{
     font-size: 2rem;
-    margin: 2rem 2.5rem;
+    margin: 1.5rem 2.5rem;
     display: block;
+    padding: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .header .navbar a::after{
+    display: none;
+  }
+
+  .header .navbar a:hover{
+    background: rgba(249, 186, 96, 0.1);
+    padding-left: 2rem;
   }
 
   .home .content h3{
     font-size: 4.5rem;
+    line-height: 1.2;
   }
+
+  .home .content p{
+    font-size: 1.6rem;
+  }
+
+  .heading{
+    font-size: 3.5rem;
+  }
+
+  .about .row .content h3{
+    font-size: 3rem;
+  }
+
+  .education .box-container .box h3{
+    font-size: 2rem;
+  }
+
+  .education .box-container .box p{
+    font-size: 1.4rem;
+  }
+
   .title_link {
     font-size: 15px;
   }
   object embed {
     width: 400px;
-    height: 400px;   
+    height: 400px;
+  }
+
+  section{
+    padding: 2rem 5%;
   }
 
 }
@@ -711,15 +825,61 @@ attestation styles
   html{
     font-size: 50%;
   }
+
+  .header .navbar{
+    width: calc(100vw - 4rem);
+    left: 2rem;
+    right: auto;
+  }
+
+  .header .navbar.active{
+    left: 2rem;
+    right: auto;
+  }
+
   .home .content h3{
     font-size: 3.5rem;
+    line-height: 1.3;
   }
+
+  .home .content p{
+    font-size: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .heading{
+    font-size: 3rem;
+    margin-bottom: 4rem;
+  }
+
+  .about .row .content p{
+    font-size: 1.3rem;
+  }
+
   .title_link {
     font-size: 10px;
   }
+
   object embed {
     width: 200px;
-    height: 300px;   
+    height: 300px;
+  }
+
+  section{
+    padding: 2rem 4%;
+  }
+
+  .btn{
+    padding: 0.8rem 2rem;
+    font-size: 1.5rem;
+  }
+
+  .contact .icons-container .icons{
+    padding: 1.5rem;
+  }
+
+  .footer .box-container{
+    gap: 2rem;
   }
 }
 
