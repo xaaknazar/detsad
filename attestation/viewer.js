@@ -152,6 +152,11 @@ function showFilesModal(item) {
 function createFileCard(file) {
     const card = document.createElement('div');
     card.className = 'file-card';
+
+    // Форматируем размер файла
+    const sizeInKB = file.size ? (file.size / 1024).toFixed(2) : 0;
+    const sizeText = sizeInKB > 1024 ? `${(sizeInKB / 1024).toFixed(2)} MB` : `${sizeInKB} KB`;
+
     card.innerHTML = `
         <div class="file-card-info">
             <div class="file-card-icon">
@@ -159,10 +164,10 @@ function createFileCard(file) {
             </div>
             <div class="file-card-details">
                 <h4>${file.name}</h4>
-                <p>Жүктелген: ${file.uploadDate || 'Белгісіз'}</p>
+                <p>Жүктелген: ${file.uploadDate || 'Белгісіз'} | Өлшемі: ${sizeText}</p>
             </div>
         </div>
-        <button class="view-file-btn" onclick="viewFile('${file.path}')">
+        <button class="view-file-btn" onclick="viewFileFromViewer(${file.id})">
             <i class="fas fa-eye"></i> Ашу
         </button>
     `;
@@ -170,8 +175,52 @@ function createFileCard(file) {
 }
 
 // Просмотр файла
-function viewFile(path) {
-    window.open(path, '_blank');
+function viewFileFromViewer(fileId) {
+    // Находим файл в данных
+    let foundFile = null;
+
+    attestationData.categories.forEach(category => {
+        if (category.files) {
+            const file = category.files.find(f => f.id === fileId);
+            if (file) foundFile = file;
+        }
+        if (category.subcategories) {
+            category.subcategories.forEach(sub => {
+                if (sub.files) {
+                    const file = sub.files.find(f => f.id === fileId);
+                    if (file) foundFile = file;
+                }
+            });
+        }
+    });
+
+    if (!foundFile || !foundFile.data) {
+        alert('Файл табылмады немесе зақымдалған!');
+        return;
+    }
+
+    // Создаем blob из base64
+    const blob = base64ToBlob(foundFile.data, foundFile.type || 'application/pdf');
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Открываем в новой вкладке
+    window.open(blobUrl, '_blank');
+
+    // Очищаем URL через некоторое время
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+}
+
+// Конвертация base64 в Blob
+function base64ToBlob(base64, mimeType) {
+    const byteString = atob(base64.split(',')[1]);
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ab], { type: mimeType });
 }
 
 // Закрыть модальное окно

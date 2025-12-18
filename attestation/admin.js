@@ -161,6 +161,11 @@ function showFiles(item) {
     item.files.forEach((file, index) => {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'file-item';
+
+        // Форматируем размер файла
+        const sizeInKB = file.size ? (file.size / 1024).toFixed(2) : 0;
+        const sizeText = sizeInKB > 1024 ? `${(sizeInKB / 1024).toFixed(2)} MB` : `${sizeInKB} KB`;
+
         fileDiv.innerHTML = `
             <div class="file-info">
                 <div class="file-icon">
@@ -168,11 +173,11 @@ function showFiles(item) {
                 </div>
                 <div class="file-details">
                     <h4>${file.name}</h4>
-                    <p>Жүктелген: ${file.uploadDate || 'Белгісіз'}</p>
+                    <p>Жүктелген: ${file.uploadDate || 'Белгісіз'} | Өлшемі: ${sizeText}</p>
                 </div>
             </div>
             <div class="file-actions">
-                <button class="view-btn" onclick="viewFile('${file.path}')">
+                <button class="view-btn" onclick="viewFile(${file.id})">
                     <i class="fas fa-eye"></i> Қарау
                 </button>
                 <button class="delete-btn" onclick="deleteFile(${index})">
@@ -191,7 +196,23 @@ function handleFileSelect(event) {
     const uploadBtn = document.getElementById('uploadBtn');
 
     if (selectedFile && selectedFile.type === 'application/pdf') {
-        fileNameSpan.textContent = selectedFile.name;
+        // Проверяем размер файла (рекомендуется до 2 MB)
+        const sizeInMB = selectedFile.size / (1024 * 1024);
+
+        if (sizeInMB > 5) {
+            showNotification('Файл тым үлкен! 5 MB-тан аспауы керек.', 'error');
+            fileNameSpan.textContent = '';
+            uploadBtn.disabled = true;
+            event.target.value = '';
+            selectedFile = null;
+            return;
+        }
+
+        if (sizeInMB > 2) {
+            showNotification(`Ескерту: Файл өлшемі ${sizeInMB.toFixed(2)} MB. Кішірек файл жүктеу ұсынылады.`, 'error');
+        }
+
+        fileNameSpan.textContent = `${selectedFile.name} (${sizeInMB.toFixed(2)} MB)`;
         uploadBtn.disabled = false;
     } else {
         fileNameSpan.textContent = '';
@@ -215,8 +236,10 @@ async function uploadFile() {
     }
 
     try {
-        // В реальном проекте здесь был бы API запрос для загрузки файла на сервер
-        // Сейчас сохраняем информацию о файле локально
+        showNotification('Файл жүктелуде...', 'success');
+
+        // Читаем файл как base64
+        const base64Data = await readFileAsBase64(selectedFile);
 
         const targetItem = currentSubcategory || currentCategory;
         if (!targetItem.files) {
@@ -224,10 +247,12 @@ async function uploadFile() {
         }
 
         const newFile = {
+            id: Date.now(),
             name: selectedFile.name,
-            path: `attestation/pdfs/${Date.now()}_${selectedFile.name}`,
+            data: base64Data, // Сохраняем base64 данные
             uploadDate: new Date().toLocaleDateString('ru-RU'),
-            size: selectedFile.size
+            size: selectedFile.size,
+            type: selectedFile.type
         };
 
         targetItem.files.push(newFile);
@@ -251,6 +276,20 @@ async function uploadFile() {
     }
 }
 
+// Чтение файла как base64
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            resolve(e.target.result);
+        };
+        reader.onerror = (error) => {
+            reject(error);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 // Удаление файла
 function deleteFile(index) {
     if (!confirm('Файлды өшіруге сенімдісіз бе?')) {
@@ -270,17 +309,61 @@ function deleteFile(index) {
 }
 
 // Просмотр файла
-function viewFile(path) {
-    window.open(path, '_blank');
+function viewFile(fileId) {
+    const targetItem = currentSubcategory || currentCategory;
+    const file = targetItem.files.find(f => f.id === fileId);
+
+    if (!file || !file.data) {
+        showNotification('Файл табылмады!', 'error');
+        return;
+    }
+
+    // Создаем blob из base64
+    const blob = base64ToBlob(file.data, file.type || 'application/pdf');
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Открываем в новой вкладке
+    window.open(blobUrl, '_blank');
+
+    // Очищаем URL через некоторое время
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+}
+
+// Конвертация base64 в Blob
+function base64ToBlob(base64, mimeType) {
+    const byteString = atob(base64.split(',')[1]);
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ab], { type: mimeType });
 }
 
 // Сохранение данных
 function saveData() {
-    // Сохраняем в localStorage
-    localStorage.setItem('attestationData', JSON.stringify(categoriesData));
+    try {
+        // Сохраняем в localStorage
+        localStorage.setItem('attestationData', JSON.stringify(categoriesData));
+        console.log('Данные сохранены успешно');
+    } catch (error) {
+        console.error('Ошибка сохранения:', error);
 
-    // В реальном проекте здесь был бы API запрос для сохранения данных на сервере
-    console.log('Данные сохранены:', categoriesData);
+        if (error.name === 'QuotaExceededError') {
+            showNotification('LocalStorage толды! Кейбір файлдарды өшіріңіз.', 'error');
+
+            // Показываем подробную информацию
+            const dataSize = new Blob([JSON.stringify(categoriesData)]).size;
+            const sizeInMB = (dataSize / (1024 * 1024)).toFixed(2);
+            console.warn(`Деректер өлшемі: ${sizeInMB} MB`);
+
+            alert(`Браузер жадысы толды!\n\nСақталған деректер: ${sizeInMB} MB\n\nКейбір файлдарды өшіріп, қайта көріңіз.`);
+        } else {
+            showNotification('Деректерді сақтауда қате!', 'error');
+        }
+    }
 }
 
 // Показать уведомление
