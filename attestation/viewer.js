@@ -11,21 +11,31 @@ window.addEventListener('DOMContentLoaded', () => {
 // Загрузка данных
 async function loadAttestationData() {
     try {
+        // СНАЧАЛА проверяем localStorage
+        const localData = localStorage.getItem('attestationData');
+
+        if (localData) {
+            console.log('Загружено из localStorage');
+            attestationData = JSON.parse(localData);
+            renderCategories();
+            return;
+        }
+
+        // Если в localStorage нет, пробуем загрузить из JSON
+        console.log('Пробуем загрузить из data.json...');
         const response = await fetch('../attestation/data.json');
         const data = await response.json();
         attestationData = data;
+        renderCategories();
     } catch (error) {
-        console.log('Загрузка из localStorage...');
-        attestationData = JSON.parse(localStorage.getItem('attestationData'));
-    }
+        console.error('Ошибка загрузки данных:', error);
 
-    if (!attestationData || !attestationData.categories) {
+        // Используем пустую структуру если ничего не загрузилось
         attestationData = {
             categories: []
         };
+        renderCategories();
     }
-
-    renderCategories();
 }
 
 // Отрисовка категорий
@@ -35,7 +45,9 @@ function renderCategories() {
 
     container.innerHTML = '';
 
-    if (attestationData.categories.length === 0) {
+    console.log('Рендеринг категорий:', attestationData);
+
+    if (!attestationData || !attestationData.categories || attestationData.categories.length === 0) {
         container.innerHTML = `
             <div class="empty-message" style="grid-column: 1 / -1;">
                 <i class="fas fa-folder-open"></i>
@@ -44,6 +56,19 @@ function renderCategories() {
         `;
         return;
     }
+
+    // Считаем общее количество файлов
+    let totalFiles = 0;
+    attestationData.categories.forEach(cat => {
+        if (cat.files) totalFiles += cat.files.length;
+        if (cat.subcategories) {
+            cat.subcategories.forEach(sub => {
+                if (sub.files) totalFiles += sub.files.length;
+            });
+        }
+    });
+
+    console.log(`Всего файлов: ${totalFiles}`);
 
     attestationData.categories.forEach(category => {
         const categoryCard = createCategoryCard(category);
@@ -62,18 +87,20 @@ function createCategoryCard(category) {
 
     // Подсчет файлов
     let fileCount = 0;
-    if (category.files) {
+    if (category.files && Array.isArray(category.files)) {
         fileCount = category.files.length;
     }
-    if (category.subcategories) {
+    if (category.subcategories && Array.isArray(category.subcategories)) {
         category.subcategories.forEach(sub => {
-            if (sub.files) {
+            if (sub.files && Array.isArray(sub.files)) {
                 fileCount += sub.files.length;
             }
         });
     }
 
     const iconClass = category.subcategories ? 'fa-folder-tree' : 'fa-folder';
+
+    console.log(`Категория: ${category.title}, файлов: ${fileCount}`);
 
     card.innerHTML = `
         <h3><i class="fas ${iconClass}"></i> ${category.title}</h3>
@@ -127,10 +154,13 @@ function showFilesModal(item) {
     const modalTitle = document.getElementById('modalTitle');
     const filesList = document.getElementById('filesListModal');
 
+    console.log('Открываем модальное окно для:', item);
+
     modalTitle.textContent = item.title;
     filesList.innerHTML = '';
 
-    if (!item.files || item.files.length === 0) {
+    if (!item.files || !Array.isArray(item.files) || item.files.length === 0) {
+        console.log('Нет файлов в категории');
         filesList.innerHTML = `
             <div class="empty-message">
                 <i class="fas fa-file-pdf"></i>
@@ -138,7 +168,9 @@ function showFilesModal(item) {
             </div>
         `;
     } else {
-        item.files.forEach(file => {
+        console.log(`Отображаем ${item.files.length} файлов`);
+        item.files.forEach((file, index) => {
+            console.log(`Файл ${index + 1}:`, file);
             const fileCard = createFileCard(file);
             filesList.appendChild(fileCard);
         });
