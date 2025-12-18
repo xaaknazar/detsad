@@ -53,14 +53,29 @@ function showAdminPanel() {
 // Загрузка категорий
 async function loadCategories() {
     try {
+        // СНАЧАЛА проверяем localStorage
+        const localData = localStorage.getItem('attestationData');
+
+        if (localData) {
+            console.log('Admin: Загружено из localStorage');
+            categoriesData = JSON.parse(localData);
+            renderCategories();
+            return;
+        }
+
+        // Если в localStorage нет, загружаем из JSON
+        console.log('Admin: Загрузка из data.json...');
         const response = await fetch('attestation/data.json');
         const data = await response.json();
         categoriesData = data;
+
+        // Сохраняем в localStorage для будущего использования
+        saveData();
         renderCategories();
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        // Используем локальные данные если не удалось загрузить
-        categoriesData = JSON.parse(localStorage.getItem('attestationData')) || getDefaultData();
+        // Используем пустую структуру
+        categoriesData = getDefaultData();
         renderCategories();
     }
 }
