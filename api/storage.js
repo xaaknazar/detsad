@@ -2,7 +2,7 @@ import { list } from '@vercel/blob';
 
 // Лимиты
 const MAX_FILE_SIZE = 20 * 1024 * 1024;  // 20 MB
-const MAX_STORAGE_SIZE = 5 * 1024 * 1024 * 1024;  // 5 GB
+const MAX_STORAGE_SIZE = 1 * 1024 * 1024 * 1024;  // 1 GB
 
 export default async function handler(req, res) {
   // CORS headers
