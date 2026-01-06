@@ -1,163 +1,372 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="kk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Қолдану ережелері</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- lightgallery css cdn link -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery-js/1.4.0/css/lightgallery.min.css">
-    <!-- custom css file link  -->
+    <title>Аттестация - Алтын ұя</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../style.css">
+    <style>
+        .attestation-container {
+            max-width: 1400px;
+            margin: 100px auto 50px;
+            padding: 20px;
+        }
+
+        .attestation-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .attestation-header h1 {
+            font-size: 4rem;
+            color: var(--black);
+            margin-bottom: 15px;
+        }
+
+        .attestation-header p {
+            font-size: 1.8rem;
+            color: var(--light-color);
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .category-card {
+            background: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 5px solid var(--orange);
+        }
+
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 1rem 3rem rgba(0,0,0,.2);
+        }
+
+        .category-card.has-subs:hover {
+            border-left-color: var(--pink);
+        }
+
+        .category-card h3 {
+            font-size: 2rem;
+            color: var(--black);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-card h3 i {
+            color: var(--orange);
+            font-size: 2.5rem;
+        }
+
+        .category-card .file-count {
+            font-size: 1.4rem;
+            color: var(--light-color);
+            margin-top: 10px;
+        }
+
+        .category-card .file-count i {
+            color: var(--orange);
+            margin-right: 5px;
+        }
+
+        .subcategories {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .subcategories.active {
+            display: block;
+        }
+
+        .subcategory-item {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subcategory-item:hover {
+            background: var(--orange);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .subcategory-item .badge {
+            background: var(--orange);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+        }
+
+        .subcategory-item:hover .badge {
+            background: white;
+            color: var(--orange);
+        }
+
+        /* Модальное окно для просмотра файлов */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--orange);
+        }
+
+        .modal-header h2 {
+            font-size: 2.8rem;
+            color: var(--black);
+            margin-bottom: 10px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 3rem;
+            color: var(--light-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-modal:hover {
+            color: var(--orange);
+            transform: rotate(90deg);
+        }
+
+        .files-list-modal {
+            display: grid;
+            gap: 15px;
+        }
+
+        .file-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .file-card:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .file-card-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-card-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--orange);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .file-card-details h4 {
+            font-size: 1.7rem;
+            color: var(--black);
+            margin-bottom: 5px;
+        }
+
+        .file-card-details p {
+            font-size: 1.3rem;
+            color: var(--light-color);
+        }
+
+        .view-file-btn {
+            padding: 12px 25px;
+            background: var(--orange);
+            color: white;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .view-file-btn:hover {
+            background: var(--pink);
+            transform: scale(1.05);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--light-color);
+        }
+
+        .empty-message i {
+            font-size: 6rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .empty-message p {
+            font-size: 1.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 25px;
+            }
+
+            .file-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .view-file-btn {
+                width: 100%;
+                margin-top: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
     <header class="header">
-
         <a href="../index.html" class="logo"> <i class="fas fa-school"></i> Алтын ұя</a>
-
         <nav class="navbar">
-            <a href="../index.html" target="_blank">Басты бет</a>
-            <a href="../index.html#about " target="_blank">Біз туралы</a>
-            <a href="../index.html#education" target="_blank">Үйірмелер</a>
-            <a href="../index.html#teacher" target="_blank">Тәрбиешілер</a>
-            <a href="../index.html#gallery" target="_blank">Галлерия</a>
-            <a href="../index.html#contact" target="_blank">Байланыс</a>
-            <a href="../links/attestation.html" target="_blank">Аттестация</a>
-            <a href="../links/news.html" target="_blank">Мәліметтер</a>
+            <a href="../index.html">Басты бет</a>
+            <a href="../index.html#about">Біз туралы</a>
+            <a href="../index.html#education">Үйірмелер</a>
+            <a href="../index.html#teacher">Тәрбиешілер</a>
+            <a href="../index.html#gallery">Галлерия</a>
+            <a href="../index.html#contact">Байланыс</a>
+            <a href="attestation.html" style="color: var(--orange);">Аттестация</a>
+            <a href="news.html">Мәліметтер</a>
         </nav>
-
-
+        <div class="icons">
+            <div id="menu-btn" class="fas fa-bars"></div>
+        </div>
     </header>
 
+    <div class="attestation-container">
+        <div class="attestation-header">
+            <h1><i class="fas fa-certificate"></i> Аттестация құжаттары</h1>
+            <p>Балабақшаның барлық құжаттары мен материалдары</p>
+        </div>
 
-
-
-    <div class="container">
-        <div class="block">
-            <a class="title_link" href="">Өзін-өзі бағалау қорытындысы</a>
-            <ul>
-                <li><a href="../underlinks/buyryk.html">Бұйрық</a></li>
-                <li><a href="../underlinks/teachers.html">Педагогтер туралы мәлемет</a></li>
-                <li><a href="../underlinks/contingent.html">Контингент</a></li>
-                <li><a href="../underlinks/zhargy.html">Жарғы</a></li>
-                <li><a href="../underlinks/schedule.html">Штаттық кесте</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <a class="title_link" href="">Циклограмма</a>
-            <ul>
-                <li><a href="#">2021-22</a></li>
-                <li><a href="../underlinks/balapan21-22.html">Балапан тобы</a></li>
-                <li><a href="../underlinks/zhuldzy21-22.html">Жұлдыз тобы</a></li>
-                <li><a href="../underlinks/kun21-22.html">Күншуақ тобы</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <a class="title_link" href="">Перспективалық жоспарлар</a>
-            <ul>
-                <li><a href="#">2021-22</a></li>
-                <li><a href="../underlinks/balapan21-22.html">Балапан тобы</a></li>
-                <li><a href="../underlinks/zhuldzy21-22.html">Жұлдыз тобы</a></li>
-                <li><a href="../underlinks/kun21-22.html">Күншуақ тобы</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <ul>
-                <li><a href="../underlinks/ses_info.html">Сэс анықтамасы</a></li>
-                <li><a href="../underlinks/team.html">Сапалық құрам</a></li>
-                <li><a href="../underlinks/inventary.html">Инвентаризация</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <ul>
-                <li><a href="#">2022-23</a></li>
-                <li><a href="../underlinks/balapan22-23.html">Балапан тобы</a></li>
-                <li><a href="../underlinks/zhuldzy22-23.html">Жұлдыз тобы</a></li>
-                <li><a href="../underlinks/kun22-23.html">Күншуақ тобы</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <ul>
-                <li><a href="#">2022-23</a></li>
-                <li><a href="../underlinks/balapan22-23.html">Балапан тобы</a></li>
-                <li><a href="../underlinks/zhuldzy22-23.html">Жұлдыз тобы</a></li>
-                <li><a href="../underlinks/kun22-23.html">Күншуақ тобы</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <ul>
-                <li><a href="../underlinks/monitoring.html">Мониторинг</a></li>
-                <li><a href="../underlinks/21-22year.html">Жылдық жоспар 2021-22</a></li>
-                <li><a href="../underlinks/22-23year.html">Жылдық жоспар 2022-23</a></li>
-                <li><a href="../underlinks/23-24year.html">Жылдық жоспар 2023-24</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <ul>
-                <li><a href="#">2023-24</a></li>
-                <li><a href="../underlinks/balapan23-24.html">Балапан тобы</a></li>
-                <li><a href="../underlinks/zhuldzy23-24.html">Жұлдыз тобы</a></li>
-                <li><a href="../underlinks/kun23-24.html">Күншуақ тобы</a></li>
-            </ul>
-        </div>
-        <div class="block">
-            <ul>
-                <li><a href="#">2023-24</a></li>
-                <li><a href="../underlinks/balapan23-24.html">Балапан тобы</a></li>
-                <li><a href="../underlinks/zhuldzy23-24.html">Жұлдыз тобы</a></li>
-                <li><a href="../underlinks/kun23-24.html">Күншуақ тобы</a></li>
-            </ul>
+        <div id="categoriesContainer" class="categories-grid">
+            <!-- Категории будут загружены динамически -->
         </div>
     </div>
 
-
-
-    
+    <!-- Modal для просмотра файлов -->
+    <div id="filesModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+            </div>
+            <div id="filesListModal" class="files-list-modal"></div>
+        </div>
+    </div>
 
     <section class="footer">
-
         <div class="box-container">
-
             <div class="box">
                 <h3> <i class="fas fa-school"></i> Алтын ұя </h3>
                 <p>TOO "Dos Group kz" "Алтын ұя" жекеменшік бөбекжайы</p>
             </div>
 
-
             <div class="box">
-                <h3>Cілтемелер</h3>
-                <a href="#"> <i class="fas fa-caret-right"></i> Басты бет</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> Біз туралы</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> Қабылдаулар</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> Жаңалықтар</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> Байланыс</a>
-                <a href="links/attestation.html"> <i class="fas fa-caret-right"></i> Аттестация</a>
-                <a href="links/news.html"> <i class="fas fa-caret-right"></i> Мәліметтер</a>
+                <h3>Сілтемелер</h3>
+                <a href="../index.html"> <i class="fas fa-caret-right"></i> Басты бет</a>
+                <a href="../index.html#about"> <i class="fas fa-caret-right"></i> Біз туралы</a>
+                <a href="../index.html#education"> <i class="fas fa-caret-right"></i> Үйірмелер</a>
+                <a href="../index.html#contact"> <i class="fas fa-caret-right"></i> Байланыс</a>
+                <a href="attestation.html"> <i class="fas fa-caret-right"></i> Аттестация</a>
+                <a href="news.html"> <i class="fas fa-caret-right"></i> Мәліметтер</a>
             </div>
 
             <div class="box">
                 <h3>Қосымша сілтемелер</h3>
-                <a href="links/policy.html"> <i class="fas fa-caret-right"></i> құпиялылық саясаты</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> қолдану ережелері</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> сайт картасы</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> Жиі қойылатын сұрақтар</a>
-                <a href="#"> <i class="fas fa-caret-right"></i> қол жетімділік туралы мәлімдеме</a>
+                <a href="policy.html"> <i class="fas fa-caret-right"></i> құпиялылық саясаты</a>
+                <a href="rules.html"> <i class="fas fa-caret-right"></i> қолдану ережелері</a>
+                <a href="map.html"> <i class="fas fa-caret-right"></i> сайт картасы</a>
+                <a href="questions.html"> <i class="fas fa-caret-right"></i> Жиі қойылатын сұрақтар</a>
+                <a href="availables.html"> <i class="fas fa-caret-right"></i> қол жетімділік туралы мәлімдеме</a>
             </div>
-
         </div>
 
         <div class="credit"> &copy; copyright @ 2023 by <span>TOO "Dos Group kz"</span></div>
-
     </section>
 
-
-    <!-- lightgallery cdn js link -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery-js/1.4.0/js/lightgallery.min.js"></script>
-    <!-- custom js file link -->
-    <script src="script.js"></script>
-
-    <script>
-        lightGallery(document.querySelector('.gallery .gallery-container'));
-    </script> 
+    <script src="../script.js"></script>
+    <script src="../attestation/viewer.js"></script>
 </body>
 </html>

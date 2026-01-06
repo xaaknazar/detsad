@@ -1,0 +1,128 @@
+{
+  "categories": [
+    {
+      "id": "self-assessment",
+      "title": "Өзін-өзі бағалау қорытындысы",
+      "files": []
+    },
+    {
+      "id": "order",
+      "title": "Бұйрық",
+      "files": []
+    },
+    {
+      "id": "teachers-info",
+      "title": "Педагогтер туралы мәліметтер",
+      "files": []
+    },
+    {
+      "id": "contingent",
+      "title": "Контингент",
+      "files": []
+    },
+    {
+      "id": "charter",
+      "title": "Жарғы",
+      "files": []
+    },
+    {
+      "id": "staff-table",
+      "title": "Штаттық кесте",
+      "files": []
+    },
+    {
+      "id": "cyclogram",
+      "title": "Циклограмма",
+      "files": []
+    },
+    {
+      "id": "schedule-2021-22",
+      "title": "Күнтізбелік жоспар 2021-22",
+      "subcategories": [
+        { "id": "balapan-2021-22", "title": "Балапан тобы", "files": [] },
+        { "id": "zhuldyz-2021-22", "title": "Жұлдыз тобы", "files": [] },
+        { "id": "kunshuak-2021-22", "title": "Күншуақ тобы", "files": [] }
+      ]
+    },
+    {
+      "id": "perspective-2021-22",
+      "title": "Перспективалық жоспарлар 2021-22",
+      "subcategories": [
+        { "id": "balapan-persp-2021-22", "title": "Балапан тобы", "files": [] },
+        { "id": "zhuldyz-persp-2021-22", "title": "Жұлдыз тобы", "files": [] },
+        { "id": "kunshuak-persp-2021-22", "title": "Күншуақ тобы", "files": [] }
+      ]
+    },
+    {
+      "id": "ses-certificate",
+      "title": "СЭС анықтамасы",
+      "files": []
+    },
+    {
+      "id": "quality",
+      "title": "Сапалық құрам",
+      "files": []
+    },
+    {
+      "id": "inventory",
+      "title": "Инвентаризация",
+      "files": []
+    },
+    {
+      "id": "schedule-2022-23",
+      "title": "Күнтізбелік жоспар 2022-23",
+      "subcategories": [
+        { "id": "balapan-2022-23", "title": "Балапан тобы", "files": [] },
+        { "id": "zhuldyz-2022-23", "title": "Жұлдыз тобы", "files": [] },
+        { "id": "kunshuak-2022-23", "title": "Күншуақ тобы", "files": [] }
+      ]
+    },
+    {
+      "id": "perspective-2022-23",
+      "title": "Перспективалық жоспарлар 2022-23",
+      "subcategories": [
+        { "id": "balapan-persp-2022-23", "title": "Балапан тобы", "files": [] },
+        { "id": "zhuldyz-persp-2022-23", "title": "Жұлдыз тобы", "files": [] },
+        { "id": "kunshuak-persp-2022-23", "title": "Күншуақ тобы", "files": [] }
+      ]
+    },
+    {
+      "id": "monitoring",
+      "title": "Мониторинг",
+      "files": []
+    },
+    {
+      "id": "annual-plan-2021-22",
+      "title": "Жылдық жоспар 2021-22",
+      "files": []
+    },
+    {
+      "id": "annual-plan-2022-23",
+      "title": "Жылдық жоспар 2022-23",
+      "files": []
+    },
+    {
+      "id": "annual-plan-2023-24",
+      "title": "Жылдық жоспар 2023-24",
+      "files": []
+    },
+    {
+      "id": "schedule-2023-24",
+      "title": "Күнтізбелік жоспар 2023-24",
+      "subcategories": [
+        { "id": "balapan-2023-24", "title": "Балапан тобы", "files": [] },
+        { "id": "zhuldyz-2023-24", "title": "Жұлдыз тобы", "files": [] },
+        { "id": "kunshuak-2023-24", "title": "Күншуақ тобы", "files": [] }
+      ]
+    },
+    {
+      "id": "perspective-2023-24",
+      "title": "Перспективалық жоспарлар 2023-24",
+      "subcategories": [
+        { "id": "balapan-persp-2023-24", "title": "Балапан тобы", "files": [] },
+        { "id": "zhuldyz-persp-2023-24", "title": "Жұлдыз тобы", "files": [] },
+        { "id": "kunshuak-persp-2023-24", "title": "Күншуақ тобы", "files": [] }
+      ]
+    }
+  ]
+}
