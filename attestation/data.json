@@ -39,18 +39,18 @@
       "id": "schedule-2021-22",
       "title": "Күнтізбелік жоспар 2021-22",
       "subcategories": [
-        { "id": "balapan-2021-22", "title": "Балапан тобы", "files": [] },
-        { "id": "zhuldyz-2021-22", "title": "Жұлдыз тобы", "files": [] },
-        { "id": "kunshuak-2021-22", "title": "Күншуақ тобы", "files": [] }
+        { "id": "balapan-2021-22", "title": "\"Балапан\" ерте жас тобы", "files": [] },
+        { "id": "kulynsak-2021-22", "title": "\"Құлыншақ\" ортаңғы тобы", "files": [] },
+        { "id": "botakan-2021-22", "title": "\"Ботақан\" ересектер тобы", "files": [] }
       ]
     },
     {
       "id": "perspective-2021-22",
       "title": "Перспективалық жоспарлар 2021-22",
       "subcategories": [
-        { "id": "balapan-persp-2021-22", "title": "Балапан тобы", "files": [] },
-        { "id": "zhuldyz-persp-2021-22", "title": "Жұлдыз тобы", "files": [] },
-        { "id": "kunshuak-persp-2021-22", "title": "Күншуақ тобы", "files": [] }
+        { "id": "balapan-persp-2021-22", "title": "\"Балапан\" ерте жас тобы", "files": [] },
+        { "id": "kulynsak-persp-2021-22", "title": "\"Құлыншақ\" ортаңғы тобы", "files": [] },
+        { "id": "botakan-persp-2021-22", "title": "\"Ботақан\" ересектер тобы", "files": [] }
       ]
     },
     {
@@ -72,18 +72,18 @@
       "id": "schedule-2022-23",
       "title": "Күнтізбелік жоспар 2022-23",
       "subcategories": [
-        { "id": "balapan-2022-23", "title": "Балапан тобы", "files": [] },
-        { "id": "zhuldyz-2022-23", "title": "Жұлдыз тобы", "files": [] },
-        { "id": "kunshuak-2022-23", "title": "Күншуақ тобы", "files": [] }
+        { "id": "balapan-2022-23", "title": "\"Балапан\" ерте жас тобы", "files": [] },
+        { "id": "kulynsak-2022-23", "title": "\"Құлыншақ\" ортаңғы тобы", "files": [] },
+        { "id": "botakan-2022-23", "title": "\"Ботақан\" ересектер тобы", "files": [] }
       ]
     },
     {
       "id": "perspective-2022-23",
       "title": "Перспективалық жоспарлар 2022-23",
       "subcategories": [
-        { "id": "balapan-persp-2022-23", "title": "Балапан тобы", "files": [] },
-        { "id": "zhuldyz-persp-2022-23", "title": "Жұлдыз тобы", "files": [] },
-        { "id": "kunshuak-persp-2022-23", "title": "Күншуақ тобы", "files": [] }
+        { "id": "balapan-persp-2022-23", "title": "\"Балапан\" ерте жас тобы", "files": [] },
+        { "id": "kulynsak-persp-2022-23", "title": "\"Құлыншақ\" ортаңғы тобы", "files": [] },
+        { "id": "botakan-persp-2022-23", "title": "\"Ботақан\" ересектер тобы", "files": [] }
       ]
     },
     {
@@ -110,18 +110,18 @@
       "id": "schedule-2023-24",
       "title": "Күнтізбелік жоспар 2023-24",
       "subcategories": [
-        { "id": "balapan-2023-24", "title": "Балапан тобы", "files": [] },
-        { "id": "zhuldyz-2023-24", "title": "Жұлдыз тобы", "files": [] },
-        { "id": "kunshuak-2023-24", "title": "Күншуақ тобы", "files": [] }
+        { "id": "balapan-2023-24", "title": "\"Балапан\" ерте жас тобы", "files": [] },
+        { "id": "kulynsak-2023-24", "title": "\"Құлыншақ\" ортаңғы тобы", "files": [] },
+        { "id": "botakan-2023-24", "title": "\"Ботақан\" ересектер тобы", "files": [] }
       ]
     },
     {
       "id": "perspective-2023-24",
       "title": "Перспективалық жоспарлар 2023-24",
       "subcategories": [
-        { "id": "balapan-persp-2023-24", "title": "Балапан тобы", "files": [] },
-        { "id": "zhuldyz-persp-2023-24", "title": "Жұлдыз тобы", "files": [] },
-        { "id": "kunshuak-persp-2023-24", "title": "Күншуақ тобы", "files": [] }
+        { "id": "balapan-persp-2023-24", "title": "\"Балапан\" ерте жас тобы", "files": [] },
+        { "id": "kulynsak-persp-2023-24", "title": "\"Құлыншақ\" ортаңғы тобы", "files": [] },
+        { "id": "botakan-persp-2023-24", "title": "\"Ботақан\" ересектер тобы", "files": [] }
       ]
     }
   ]

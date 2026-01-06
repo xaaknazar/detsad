@@ -1,6 +1,9 @@
 // Загрузка и отображение категорий и файлов
 let attestationData = null;
 
+// API базовый URL
+const API_BASE_VIEWER = '';
+
 // Загрузка данных при загрузке страницы
 window.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('attestation.html')) {
@@ -11,7 +14,20 @@ window.addEventListener('DOMContentLoaded', () => {
 // Загрузка данных
 async function loadAttestationData() {
     try {
-        // СНАЧАЛА проверяем localStorage
+        // Сначала пробуем загрузить с сервера
+        const response = await fetch(`${API_BASE_VIEWER}/api/data`);
+        if (response.ok) {
+            attestationData = await response.json();
+            console.log('Данные загружены с сервера');
+            renderCategories();
+            return;
+        }
+    } catch (error) {
+        console.log('Сервер недоступен, пробуем localStorage');
+    }
+
+    try {
+        // Fallback на localStorage
         const localData = localStorage.getItem('attestationData');
 
         if (localData) {
@@ -180,14 +196,22 @@ function showFilesModal(item) {
     document.body.style.overflow = 'hidden';
 }
 
+// Форматирование байтов
+function formatBytesViewer(bytes) {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 // Создание карточки файла
 function createFileCard(file) {
     const card = document.createElement('div');
     card.className = 'file-card';
 
     // Форматируем размер файла
-    const sizeInKB = file.size ? (file.size / 1024).toFixed(2) : 0;
-    const sizeText = sizeInKB > 1024 ? `${(sizeInKB / 1024).toFixed(2)} MB` : `${sizeInKB} KB`;
+    const sizeText = formatBytesViewer(file.size || 0);
 
     card.innerHTML = `
         <div class="file-card-info">
@@ -226,20 +250,27 @@ function viewFileFromViewer(fileId) {
         }
     });
 
-    if (!foundFile || !foundFile.data) {
-        alert('Файл табылмады немесе зақымдалған!');
+    if (!foundFile) {
+        alert('Файл табылмады!');
         return;
     }
 
-    // Создаем blob из base64
-    const blob = base64ToBlob(foundFile.data, foundFile.type || 'application/pdf');
-    const blobUrl = URL.createObjectURL(blob);
+    // Если есть путь к файлу на сервере
+    if (foundFile.path) {
+        window.open(foundFile.path, '_blank');
+        return;
+    }
 
-    // Открываем в новой вкладке
-    window.open(blobUrl, '_blank');
+    // Если файл в base64
+    if (foundFile.data) {
+        const blob = base64ToBlob(foundFile.data, foundFile.type || 'application/pdf');
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        return;
+    }
 
-    // Очищаем URL через некоторое время
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    alert('Файл деректері табылмады!');
 }
 
 // Конвертация base64 в Blob
