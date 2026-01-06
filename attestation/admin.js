@@ -1,11 +1,15 @@
 // Простая проверка пароля (в реальном проекте используйте бэкенд)
 const ADMIN_PASSWORD = 'admin2024';
 
+// API базовый URL
+const API_BASE = '';  // Пустой, так как сервер на том же домене
+
 // Глобальные переменные
 let currentCategory = null;
 let currentSubcategory = null;
 let categoriesData = null;
 let selectedFile = null;
+let storageInfo = null;
 
 // Проверка авторизации при загрузке
 window.addEventListener('DOMContentLoaded', () => {
@@ -47,15 +51,56 @@ function logout() {
 function showAdminPanel() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
+    loadStorageInfo();
     loadCategories();
+}
+
+// Загрузка информации о хранилище
+async function loadStorageInfo() {
+    try {
+        const response = await fetch(`${API_BASE}/api/storage-info`);
+        if (response.ok) {
+            storageInfo = await response.json();
+            updateStorageDisplay();
+        }
+    } catch (error) {
+        console.log('Сервер недоступен, используем localStorage');
+        storageInfo = null;
+    }
+}
+
+// Обновление отображения хранилища
+function updateStorageDisplay() {
+    const storageDisplay = document.getElementById('storageInfo');
+    if (storageDisplay && storageInfo) {
+        storageDisplay.innerHTML = `
+            <div class="storage-bar">
+                <div class="storage-used" style="width: ${storageInfo.percentUsed}%"></div>
+            </div>
+            <p>Қолданылған: ${storageInfo.usedFormatted} / ${storageInfo.maxFormatted} (${storageInfo.percentUsed}%)</p>
+            <p>Макс. файл өлшемі: ${storageInfo.maxFileSizeFormatted}</p>
+        `;
+    }
 }
 
 // Загрузка категорий
 async function loadCategories() {
     try {
-        // СНАЧАЛА проверяем localStorage
-        const localData = localStorage.getItem('attestationData');
+        // Пробуем загрузить с сервера
+        const response = await fetch(`${API_BASE}/api/data`);
+        if (response.ok) {
+            categoriesData = await response.json();
+            console.log('Admin: Данные загружены с сервера');
+            renderCategories();
+            return;
+        }
+    } catch (error) {
+        console.log('Сервер недоступен, пробуем localStorage');
+    }
 
+    // Fallback на localStorage
+    try {
+        const localData = localStorage.getItem('attestationData');
         if (localData) {
             console.log('Admin: Загружено из localStorage');
             categoriesData = JSON.parse(localData);
@@ -63,28 +108,16 @@ async function loadCategories() {
             return;
         }
 
-        // Если в localStorage нет, загружаем из JSON
-        console.log('Admin: Загрузка из data.json...');
+        // Загружаем из JSON файла
         const response = await fetch('attestation/data.json');
         const data = await response.json();
         categoriesData = data;
-
-        // Сохраняем в localStorage для будущего использования
-        saveData();
         renderCategories();
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        // Используем пустую структуру
-        categoriesData = getDefaultData();
+        categoriesData = { categories: [] };
         renderCategories();
     }
-}
-
-// Получить данные по умолчанию
-function getDefaultData() {
-    return {
-        categories: []
-    };
 }
 
 // Отрисовка категорий
@@ -96,7 +129,7 @@ function renderCategories() {
         const categoryDiv = document.createElement('div');
         categoryDiv.className = 'category-item';
         categoryDiv.innerHTML = `<i class="fas fa-folder"></i> ${category.title}`;
-        categoryDiv.onclick = () => selectCategory(category);
+        categoryDiv.onclick = (e) => selectCategory(category, e);
         container.appendChild(categoryDiv);
 
         // Если есть подкатегории
@@ -107,7 +140,7 @@ function renderCategories() {
                 subDiv.innerHTML = `<i class="fas fa-folder-open"></i> ${sub.title}`;
                 subDiv.onclick = (e) => {
                     e.stopPropagation();
-                    selectSubcategory(category, sub);
+                    selectSubcategory(category, sub, e);
                 };
                 container.appendChild(subDiv);
             });
@@ -116,7 +149,7 @@ function renderCategories() {
 }
 
 // Выбор категории
-function selectCategory(category) {
+function selectCategory(category, e) {
     currentCategory = category;
     currentSubcategory = null;
 
@@ -124,7 +157,7 @@ function selectCategory(category) {
     document.querySelectorAll('.category-item, .subcategory-item').forEach(el => {
         el.classList.remove('active');
     });
-    event.target.classList.add('active');
+    e.target.classList.add('active');
 
     // Показываем файлы категории
     if (!category.subcategories) {
@@ -141,7 +174,7 @@ function selectCategory(category) {
 }
 
 // Выбор подкатегории
-function selectSubcategory(category, subcategory) {
+function selectSubcategory(category, subcategory, e) {
     currentCategory = category;
     currentSubcategory = subcategory;
 
@@ -149,7 +182,7 @@ function selectSubcategory(category, subcategory) {
     document.querySelectorAll('.category-item, .subcategory-item').forEach(el => {
         el.classList.remove('active');
     });
-    event.target.classList.add('active');
+    e.target.classList.add('active');
 
     showFiles(subcategory);
 }
@@ -178,8 +211,7 @@ function showFiles(item) {
         fileDiv.className = 'file-item';
 
         // Форматируем размер файла
-        const sizeInKB = file.size ? (file.size / 1024).toFixed(2) : 0;
-        const sizeText = sizeInKB > 1024 ? `${(sizeInKB / 1024).toFixed(2)} MB` : `${sizeInKB} KB`;
+        const sizeText = formatBytes(file.size || 0);
 
         fileDiv.innerHTML = `
             <div class="file-info">
@@ -195,7 +227,7 @@ function showFiles(item) {
                 <button class="view-btn" onclick="viewFile(${file.id})">
                     <i class="fas fa-eye"></i> Қарау
                 </button>
-                <button class="delete-btn" onclick="deleteFile(${index})">
+                <button class="delete-btn" onclick="deleteFile(${file.id}, ${index})">
                     <i class="fas fa-trash"></i> Өшіру
                 </button>
             </div>
@@ -204,18 +236,26 @@ function showFiles(item) {
     });
 }
 
+// Форматирование байтов
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 // Обработка выбора файла
 function handleFileSelect(event) {
     selectedFile = event.target.files[0];
     const fileNameSpan = document.getElementById('selectedFileName');
     const uploadBtn = document.getElementById('uploadBtn');
 
-    if (selectedFile && selectedFile.type === 'application/pdf') {
-        // Проверяем размер файла (рекомендуется до 2 MB)
-        const sizeInMB = selectedFile.size / (1024 * 1024);
+    const maxSize = storageInfo ? storageInfo.maxFileSize : 20 * 1024 * 1024; // 20 MB
 
-        if (sizeInMB > 5) {
-            showNotification('Файл тым үлкен! 5 MB-тан аспауы керек.', 'error');
+    if (selectedFile && selectedFile.type === 'application/pdf') {
+        if (selectedFile.size > maxSize) {
+            showNotification(`Файл тым үлкен! Максимум: ${formatBytes(maxSize)}`, 'error');
             fileNameSpan.textContent = '';
             uploadBtn.disabled = true;
             event.target.value = '';
@@ -223,11 +263,7 @@ function handleFileSelect(event) {
             return;
         }
 
-        if (sizeInMB > 2) {
-            showNotification(`Ескерту: Файл өлшемі ${sizeInMB.toFixed(2)} MB. Кішірек файл жүктеу ұсынылады.`, 'error');
-        }
-
-        fileNameSpan.textContent = `${selectedFile.name} (${sizeInMB.toFixed(2)} MB)`;
+        fileNameSpan.textContent = `${selectedFile.name} (${formatBytes(selectedFile.size)})`;
         uploadBtn.disabled = false;
     } else {
         fileNameSpan.textContent = '';
@@ -253,74 +289,132 @@ async function uploadFile() {
     try {
         showNotification('Файл жүктелуде...', 'success');
 
-        // Читаем файл как base64
-        const base64Data = await readFileAsBase64(selectedFile);
-
         const targetItem = currentSubcategory || currentCategory;
-        if (!targetItem.files) {
-            targetItem.files = [];
+
+        // Пробуем загрузить на сервер
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('categoryId', currentCategory.id || currentCategory.title);
+        if (currentSubcategory) {
+            formData.append('subcategoryId', currentSubcategory.id || currentSubcategory.title);
         }
+
+        const response = await fetch(`${API_BASE}/api/upload`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+
+            if (result.success) {
+                // Обновляем локальные данные
+                if (!targetItem.files) targetItem.files = [];
+                targetItem.files.push(result.file);
+
+                // Обновляем информацию о хранилище
+                if (result.storageInfo) {
+                    loadStorageInfo();
+                }
+
+                showFiles(targetItem);
+                resetFileInput();
+                showNotification('Файл сәтті жүктелді!', 'success');
+            } else {
+                showNotification(result.error || 'Файлды жүктеуде қате!', 'error');
+            }
+        } else {
+            throw new Error('Server error');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки на сервер:', error);
+
+        // Fallback на localStorage
+        await uploadFileToLocalStorage();
+    }
+}
+
+// Загрузка в localStorage (fallback)
+async function uploadFileToLocalStorage() {
+    try {
+        const base64Data = await readFileAsBase64(selectedFile);
+        const targetItem = currentSubcategory || currentCategory;
+
+        if (!targetItem.files) targetItem.files = [];
 
         const newFile = {
             id: Date.now(),
             name: selectedFile.name,
-            data: base64Data, // Сохраняем base64 данные
+            data: base64Data,
             uploadDate: new Date().toLocaleDateString('ru-RU'),
             size: selectedFile.size,
             type: selectedFile.type
         };
 
         targetItem.files.push(newFile);
-
-        // Сохраняем данные
-        saveData();
-
-        // Обновляем отображение
+        saveDataToLocalStorage();
         showFiles(targetItem);
-
-        // Сбрасываем выбор файла
-        document.getElementById('pdfFile').value = '';
-        document.getElementById('selectedFileName').textContent = '';
-        document.getElementById('uploadBtn').disabled = true;
-        selectedFile = null;
-
-        showNotification('Файл сәтті жүктелді!', 'success');
+        resetFileInput();
+        showNotification('Файл сәтті жүктелді! (localStorage)', 'success');
     } catch (error) {
         console.error('Ошибка загрузки:', error);
         showNotification('Файлды жүктеуде қате!', 'error');
     }
 }
 
+// Сброс поля выбора файла
+function resetFileInput() {
+    document.getElementById('pdfFile').value = '';
+    document.getElementById('selectedFileName').textContent = '';
+    document.getElementById('uploadBtn').disabled = true;
+    selectedFile = null;
+}
+
 // Чтение файла как base64
 function readFileAsBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
-            resolve(e.target.result);
-        };
-        reader.onerror = (error) => {
-            reject(error);
-        };
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (error) => reject(error);
         reader.readAsDataURL(file);
     });
 }
 
 // Удаление файла
-function deleteFile(index) {
+async function deleteFile(fileId, index) {
     if (!confirm('Файлды өшіруге сенімдісіз бе?')) {
         return;
     }
 
     const targetItem = currentSubcategory || currentCategory;
-    targetItem.files.splice(index, 1);
 
-    // Сохраняем данные
-    saveData();
+    try {
+        // Пробуем удалить на сервере
+        const response = await fetch(`${API_BASE}/api/files/${fileId}`, {
+            method: 'DELETE'
+        });
 
-    // Обновляем отображение
-    showFiles(targetItem);
-
-    showNotification('Файл сәтті өшірілді!', 'success');
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                targetItem.files.splice(index, 1);
+                if (result.storageInfo) {
+                    loadStorageInfo();
+                }
+                showFiles(targetItem);
+                showNotification('Файл сәтті өшірілді!', 'success');
+                return;
+            }
+        }
+        throw new Error('Server error');
+    } catch (error) {
+        console.log('Удаление через localStorage');
+        // Fallback на localStorage
+        targetItem.files.splice(index, 1);
+        saveDataToLocalStorage();
+        showFiles(targetItem);
+        showNotification('Файл сәтті өшірілді!', 'success');
+    }
 }
 
 // Просмотр файла
@@ -328,20 +422,27 @@ function viewFile(fileId) {
     const targetItem = currentSubcategory || currentCategory;
     const file = targetItem.files.find(f => f.id === fileId);
 
-    if (!file || !file.data) {
+    if (!file) {
         showNotification('Файл табылмады!', 'error');
         return;
     }
 
-    // Создаем blob из base64
-    const blob = base64ToBlob(file.data, file.type || 'application/pdf');
-    const blobUrl = URL.createObjectURL(blob);
+    // Если есть путь к файлу на сервере
+    if (file.path) {
+        window.open(file.path, '_blank');
+        return;
+    }
 
-    // Открываем в новой вкладке
-    window.open(blobUrl, '_blank');
+    // Если файл в base64
+    if (file.data) {
+        const blob = base64ToBlob(file.data, file.type || 'application/pdf');
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        return;
+    }
 
-    // Очищаем URL через некоторое время
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    showNotification('Файл деректері табылмады!', 'error');
 }
 
 // Конвертация base64 в Blob
@@ -357,26 +458,15 @@ function base64ToBlob(base64, mimeType) {
     return new Blob([ab], { type: mimeType });
 }
 
-// Сохранение данных
-function saveData() {
+// Сохранение в localStorage
+function saveDataToLocalStorage() {
     try {
-        // Сохраняем в localStorage
         localStorage.setItem('attestationData', JSON.stringify(categoriesData));
-        console.log('Данные сохранены успешно');
+        console.log('Данные сохранены в localStorage');
     } catch (error) {
         console.error('Ошибка сохранения:', error);
-
         if (error.name === 'QuotaExceededError') {
             showNotification('LocalStorage толды! Кейбір файлдарды өшіріңіз.', 'error');
-
-            // Показываем подробную информацию
-            const dataSize = new Blob([JSON.stringify(categoriesData)]).size;
-            const sizeInMB = (dataSize / (1024 * 1024)).toFixed(2);
-            console.warn(`Деректер өлшемі: ${sizeInMB} MB`);
-
-            alert(`Браузер жадысы толды!\n\nСақталған деректер: ${sizeInMB} MB\n\nКейбір файлдарды өшіріп, қайта көріңіз.`);
-        } else {
-            showNotification('Деректерді сақтауда қате!', 'error');
         }
     }
 }
