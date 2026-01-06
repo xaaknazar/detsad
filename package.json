@@ -1,12 +1,7 @@
 {
   "name": "altyn-uyia",
   "version": "1.0.0",
-  "description": "Altyn Uyia kindergarten website with file management",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'No build required'",
-    "start": "node server.js"
-  },
+  "private": true,
   "dependencies": {
     "@vercel/blob": "^0.23.0"
   }
