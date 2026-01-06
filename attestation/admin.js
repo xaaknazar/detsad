@@ -1,8 +1,10 @@
-// Простая проверка пароля (в реальном проекте используйте бэкенд)
+// Простая проверка пароля
 const ADMIN_PASSWORD = 'admin2024';
 
-// API базовый URL
-const API_BASE = '';  // Пустой, так как сервер на том же домене
+// API URLs
+const API_UPLOAD = '/api/upload';
+const API_DELETE = '/api/delete';
+const API_STORAGE = '/api/storage';
 
 // Глобальные переменные
 let currentCategory = null;
@@ -58,14 +60,21 @@ function showAdminPanel() {
 // Загрузка информации о хранилище
 async function loadStorageInfo() {
     try {
-        const response = await fetch(`${API_BASE}/api/storage-info`);
+        const response = await fetch(API_STORAGE);
         if (response.ok) {
             storageInfo = await response.json();
             updateStorageDisplay();
         }
     } catch (error) {
-        console.log('Сервер недоступен, используем localStorage');
-        storageInfo = null;
+        console.log('Storage API not available');
+        // Показываем localStorage режим
+        const storageDisplay = document.getElementById('storageInfo');
+        if (storageDisplay) {
+            storageDisplay.innerHTML = `
+                <p><i class="fas fa-database"></i> localStorage режимі</p>
+                <p>Макс. файл: 5 MB | Жалпы: ~10 MB</p>
+            `;
+        }
     }
 }
 
@@ -73,12 +82,19 @@ async function loadStorageInfo() {
 function updateStorageDisplay() {
     const storageDisplay = document.getElementById('storageInfo');
     if (storageDisplay && storageInfo) {
+        let barClass = '';
+        if (parseFloat(storageInfo.percentUsed) > 80) {
+            barClass = 'danger';
+        } else if (parseFloat(storageInfo.percentUsed) > 50) {
+            barClass = 'warning';
+        }
+
         storageDisplay.innerHTML = `
             <div class="storage-bar">
-                <div class="storage-used" style="width: ${storageInfo.percentUsed}%"></div>
+                <div class="storage-used ${barClass}" style="width: ${storageInfo.percentUsed}%"></div>
             </div>
-            <p>Қолданылған: ${storageInfo.usedFormatted} / ${storageInfo.maxFormatted} (${storageInfo.percentUsed}%)</p>
-            <p>Макс. файл өлшемі: ${storageInfo.maxFileSizeFormatted}</p>
+            <p><i class="fas fa-cloud"></i> Vercel Blob: ${storageInfo.usedFormatted} / ${storageInfo.maxFormatted}</p>
+            <p>Макс. файл: ${storageInfo.maxFileSizeFormatted} | Файлдар: ${storageInfo.fileCount || 0}</p>
         `;
     }
 }
@@ -86,35 +102,25 @@ function updateStorageDisplay() {
 // Загрузка категорий
 async function loadCategories() {
     try {
-        // Пробуем загрузить с сервера
-        const response = await fetch(`${API_BASE}/api/data`);
-        if (response.ok) {
-            categoriesData = await response.json();
-            console.log('Admin: Данные загружены с сервера');
-            renderCategories();
-            return;
-        }
-    } catch (error) {
-        console.log('Сервер недоступен, пробуем localStorage');
-    }
-
-    // Fallback на localStorage
-    try {
+        // Сначала проверяем localStorage
         const localData = localStorage.getItem('attestationData');
         if (localData) {
-            console.log('Admin: Загружено из localStorage');
             categoriesData = JSON.parse(localData);
+            console.log('Loaded from localStorage');
             renderCategories();
             return;
         }
 
         // Загружаем из JSON файла
         const response = await fetch('attestation/data.json');
-        const data = await response.json();
-        categoriesData = data;
-        renderCategories();
+        if (response.ok) {
+            categoriesData = await response.json();
+            // Сохраняем в localStorage
+            localStorage.setItem('attestationData', JSON.stringify(categoriesData));
+            renderCategories();
+        }
     } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
+        console.error('Error loading categories:', error);
         categoriesData = { categories: [] };
         renderCategories();
     }
@@ -132,7 +138,6 @@ function renderCategories() {
         categoryDiv.onclick = (e) => selectCategory(category, e);
         container.appendChild(categoryDiv);
 
-        // Если есть подкатегории
         if (category.subcategories) {
             category.subcategories.forEach(sub => {
                 const subDiv = document.createElement('div');
@@ -153,13 +158,11 @@ function selectCategory(category, e) {
     currentCategory = category;
     currentSubcategory = null;
 
-    // Обновляем активный класс
     document.querySelectorAll('.category-item, .subcategory-item').forEach(el => {
         el.classList.remove('active');
     });
     e.target.classList.add('active');
 
-    // Показываем файлы категории
     if (!category.subcategories) {
         showFiles(category);
     } else {
@@ -178,7 +181,6 @@ function selectSubcategory(category, subcategory, e) {
     currentCategory = category;
     currentSubcategory = subcategory;
 
-    // Обновляем активный класс
     document.querySelectorAll('.category-item, .subcategory-item').forEach(el => {
         el.classList.remove('active');
     });
@@ -209,8 +211,6 @@ function showFiles(item) {
     item.files.forEach((file, index) => {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'file-item';
-
-        // Форматируем размер файла
         const sizeText = formatBytes(file.size || 0);
 
         fileDiv.innerHTML = `
@@ -251,7 +251,7 @@ function handleFileSelect(event) {
     const fileNameSpan = document.getElementById('selectedFileName');
     const uploadBtn = document.getElementById('uploadBtn');
 
-    const maxSize = storageInfo ? storageInfo.maxFileSize : 20 * 1024 * 1024; // 20 MB
+    const maxSize = storageInfo ? storageInfo.maxFileSize : 20 * 1024 * 1024;
 
     if (selectedFile && selectedFile.type === 'application/pdf') {
         if (selectedFile.size > maxSize) {
@@ -286,12 +286,11 @@ async function uploadFile() {
         return;
     }
 
+    const targetItem = currentSubcategory || currentCategory;
+    showNotification('Файл жүктелуде...', 'success');
+
     try {
-        showNotification('Файл жүктелуде...', 'success');
-
-        const targetItem = currentSubcategory || currentCategory;
-
-        // Пробуем загрузить на сервер
+        // Пробуем загрузить через Vercel Blob API
         const formData = new FormData();
         formData.append('file', selectedFile);
         formData.append('categoryId', currentCategory.id || currentCategory.title);
@@ -299,37 +298,29 @@ async function uploadFile() {
             formData.append('subcategoryId', currentSubcategory.id || currentSubcategory.title);
         }
 
-        const response = await fetch(`${API_BASE}/api/upload`, {
+        const response = await fetch(API_UPLOAD, {
             method: 'POST',
             body: formData
         });
 
         if (response.ok) {
             const result = await response.json();
-
             if (result.success) {
-                // Обновляем локальные данные
                 if (!targetItem.files) targetItem.files = [];
                 targetItem.files.push(result.file);
-
-                // Обновляем информацию о хранилище
-                if (result.storageInfo) {
-                    loadStorageInfo();
-                }
-
+                saveData();
                 showFiles(targetItem);
                 resetFileInput();
+                loadStorageInfo();
                 showNotification('Файл сәтті жүктелді!', 'success');
-            } else {
-                showNotification(result.error || 'Файлды жүктеуде қате!', 'error');
+                return;
             }
-        } else {
-            throw new Error('Server error');
         }
-    } catch (error) {
-        console.error('Ошибка загрузки на сервер:', error);
 
-        // Fallback на localStorage
+        throw new Error('API upload failed');
+
+    } catch (error) {
+        console.log('Vercel API not available, using localStorage');
         await uploadFileToLocalStorage();
     }
 }
@@ -337,6 +328,12 @@ async function uploadFile() {
 // Загрузка в localStorage (fallback)
 async function uploadFileToLocalStorage() {
     try {
+        // Проверка размера для localStorage (5 MB лимит)
+        if (selectedFile.size > 5 * 1024 * 1024) {
+            showNotification('localStorage режимінде файл 5 MB-тан аспауы керек!', 'error');
+            return;
+        }
+
         const base64Data = await readFileAsBase64(selectedFile);
         const targetItem = currentSubcategory || currentCategory;
 
@@ -352,13 +349,17 @@ async function uploadFileToLocalStorage() {
         };
 
         targetItem.files.push(newFile);
-        saveDataToLocalStorage();
+        saveData();
         showFiles(targetItem);
         resetFileInput();
         showNotification('Файл сәтті жүктелді! (localStorage)', 'success');
     } catch (error) {
-        console.error('Ошибка загрузки:', error);
-        showNotification('Файлды жүктеуде қате!', 'error');
+        console.error('Upload error:', error);
+        if (error.name === 'QuotaExceededError') {
+            showNotification('localStorage толды! Кейбір файлдарды өшіріңіз.', 'error');
+        } else {
+            showNotification('Файлды жүктеуде қате!', 'error');
+        }
     }
 }
 
@@ -387,34 +388,31 @@ async function deleteFile(fileId, index) {
     }
 
     const targetItem = currentSubcategory || currentCategory;
+    const file = targetItem.files[index];
 
     try {
-        // Пробуем удалить на сервере
-        const response = await fetch(`${API_BASE}/api/files/${fileId}`, {
-            method: 'DELETE'
-        });
+        // Если есть URL (Vercel Blob), удаляем через API
+        if (file.url || file.path) {
+            const response = await fetch(API_DELETE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: file.url || file.path })
+            });
 
-        if (response.ok) {
-            const result = await response.json();
-            if (result.success) {
-                targetItem.files.splice(index, 1);
-                if (result.storageInfo) {
-                    loadStorageInfo();
-                }
-                showFiles(targetItem);
-                showNotification('Файл сәтті өшірілді!', 'success');
-                return;
+            if (!response.ok) {
+                console.log('API delete failed, removing from local data only');
             }
         }
-        throw new Error('Server error');
     } catch (error) {
-        console.log('Удаление через localStorage');
-        // Fallback на localStorage
-        targetItem.files.splice(index, 1);
-        saveDataToLocalStorage();
-        showFiles(targetItem);
-        showNotification('Файл сәтті өшірілді!', 'success');
+        console.log('Delete API error:', error);
     }
+
+    // Удаляем из локальных данных
+    targetItem.files.splice(index, 1);
+    saveData();
+    showFiles(targetItem);
+    loadStorageInfo();
+    showNotification('Файл сәтті өшірілді!', 'success');
 }
 
 // Просмотр файла
@@ -427,13 +425,13 @@ function viewFile(fileId) {
         return;
     }
 
-    // Если есть путь к файлу на сервере
-    if (file.path) {
-        window.open(file.path, '_blank');
+    // Если есть URL (Vercel Blob)
+    if (file.url || file.path) {
+        window.open(file.url || file.path, '_blank');
         return;
     }
 
-    // Если файл в base64
+    // Если файл в base64 (localStorage)
     if (file.data) {
         const blob = base64ToBlob(file.data, file.type || 'application/pdf');
         const blobUrl = URL.createObjectURL(blob);
@@ -458,21 +456,23 @@ function base64ToBlob(base64, mimeType) {
     return new Blob([ab], { type: mimeType });
 }
 
-// Сохранение в localStorage
-function saveDataToLocalStorage() {
+// Сохранение данных
+function saveData() {
     try {
         localStorage.setItem('attestationData', JSON.stringify(categoriesData));
-        console.log('Данные сохранены в localStorage');
     } catch (error) {
-        console.error('Ошибка сохранения:', error);
+        console.error('Save error:', error);
         if (error.name === 'QuotaExceededError') {
-            showNotification('LocalStorage толды! Кейбір файлдарды өшіріңіз.', 'error');
+            showNotification('localStorage толды!', 'error');
         }
     }
 }
 
 // Показать уведомление
 function showNotification(message, type = 'success') {
+    // Удаляем предыдущие уведомления
+    document.querySelectorAll('.notification').forEach(n => n.remove());
+
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.innerHTML = `
@@ -480,9 +480,7 @@ function showNotification(message, type = 'success') {
     `;
     document.body.appendChild(notification);
 
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
+    setTimeout(() => notification.remove(), 3000);
 }
 
 // Обработчик Enter для входа
