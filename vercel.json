@@ -1,4 +1,7 @@
 {
+  "buildCommand": null,
+  "outputDirectory": null,
+  "framework": null,
   "functions": {
     "api/upload.js": {
       "maxDuration": 60
