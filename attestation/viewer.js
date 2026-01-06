@@ -1,9 +1,6 @@
 // Загрузка и отображение категорий и файлов
 let attestationData = null;
 
-// API базовый URL
-const API_BASE_VIEWER = '';
-
 // Загрузка данных при загрузке страницы
 window.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('attestation.html')) {
@@ -14,42 +11,24 @@ window.addEventListener('DOMContentLoaded', () => {
 // Загрузка данных
 async function loadAttestationData() {
     try {
-        // Сначала пробуем загрузить с сервера
-        const response = await fetch(`${API_BASE_VIEWER}/api/data`);
+        // Проверяем localStorage
+        const localData = localStorage.getItem('attestationData');
+        if (localData) {
+            attestationData = JSON.parse(localData);
+            console.log('Loaded from localStorage');
+            renderCategories();
+            return;
+        }
+
+        // Загружаем из JSON файла
+        const response = await fetch('../attestation/data.json');
         if (response.ok) {
             attestationData = await response.json();
-            console.log('Данные загружены с сервера');
             renderCategories();
-            return;
         }
     } catch (error) {
-        console.log('Сервер недоступен, пробуем localStorage');
-    }
-
-    try {
-        // Fallback на localStorage
-        const localData = localStorage.getItem('attestationData');
-
-        if (localData) {
-            console.log('Загружено из localStorage');
-            attestationData = JSON.parse(localData);
-            renderCategories();
-            return;
-        }
-
-        // Если в localStorage нет, пробуем загрузить из JSON
-        console.log('Пробуем загрузить из data.json...');
-        const response = await fetch('../attestation/data.json');
-        const data = await response.json();
-        attestationData = data;
-        renderCategories();
-    } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
-
-        // Используем пустую структуру если ничего не загрузилось
-        attestationData = {
-            categories: []
-        };
+        console.error('Error loading data:', error);
+        attestationData = { categories: [] };
         renderCategories();
     }
 }
@@ -61,8 +40,6 @@ function renderCategories() {
 
     container.innerHTML = '';
 
-    console.log('Рендеринг категорий:', attestationData);
-
     if (!attestationData || !attestationData.categories || attestationData.categories.length === 0) {
         container.innerHTML = `
             <div class="empty-message" style="grid-column: 1 / -1;">
@@ -72,19 +49,6 @@ function renderCategories() {
         `;
         return;
     }
-
-    // Считаем общее количество файлов
-    let totalFiles = 0;
-    attestationData.categories.forEach(cat => {
-        if (cat.files) totalFiles += cat.files.length;
-        if (cat.subcategories) {
-            cat.subcategories.forEach(sub => {
-                if (sub.files) totalFiles += sub.files.length;
-            });
-        }
-    });
-
-    console.log(`Всего файлов: ${totalFiles}`);
 
     attestationData.categories.forEach(category => {
         const categoryCard = createCategoryCard(category);
@@ -116,8 +80,6 @@ function createCategoryCard(category) {
 
     const iconClass = category.subcategories ? 'fa-folder-tree' : 'fa-folder';
 
-    console.log(`Категория: ${category.title}, файлов: ${fileCount}`);
-
     card.innerHTML = `
         <h3><i class="fas ${iconClass}"></i> ${category.title}</h3>
         <div class="file-count">
@@ -126,7 +88,6 @@ function createCategoryCard(category) {
         </div>
     `;
 
-    // Если есть подкатегории
     if (category.subcategories) {
         const subsDiv = document.createElement('div');
         subsDiv.className = 'subcategories';
@@ -148,17 +109,13 @@ function createCategoryCard(category) {
 
         card.appendChild(subsDiv);
 
-        // Клик по категории - раскрыть подкатегории
         card.onclick = (e) => {
             if (!e.target.classList.contains('subcategory-item')) {
                 subsDiv.classList.toggle('active');
             }
         };
     } else {
-        // Клик по категории без подкатегорий - показать файлы
-        card.onclick = () => {
-            showFilesModal(category);
-        };
+        card.onclick = () => showFilesModal(category);
     }
 
     return card;
@@ -170,13 +127,10 @@ function showFilesModal(item) {
     const modalTitle = document.getElementById('modalTitle');
     const filesList = document.getElementById('filesListModal');
 
-    console.log('Открываем модальное окно для:', item);
-
     modalTitle.textContent = item.title;
     filesList.innerHTML = '';
 
     if (!item.files || !Array.isArray(item.files) || item.files.length === 0) {
-        console.log('Нет файлов в категории');
         filesList.innerHTML = `
             <div class="empty-message">
                 <i class="fas fa-file-pdf"></i>
@@ -184,9 +138,7 @@ function showFilesModal(item) {
             </div>
         `;
     } else {
-        console.log(`Отображаем ${item.files.length} файлов`);
-        item.files.forEach((file, index) => {
-            console.log(`Файл ${index + 1}:`, file);
+        item.files.forEach(file => {
             const fileCard = createFileCard(file);
             filesList.appendChild(fileCard);
         });
@@ -209,8 +161,6 @@ function formatBytesViewer(bytes) {
 function createFileCard(file) {
     const card = document.createElement('div');
     card.className = 'file-card';
-
-    // Форматируем размер файла
     const sizeText = formatBytesViewer(file.size || 0);
 
     card.innerHTML = `
@@ -232,7 +182,6 @@ function createFileCard(file) {
 
 // Просмотр файла
 function viewFileFromViewer(fileId) {
-    // Находим файл в данных
     let foundFile = null;
 
     attestationData.categories.forEach(category => {
@@ -255,13 +204,13 @@ function viewFileFromViewer(fileId) {
         return;
     }
 
-    // Если есть путь к файлу на сервере
-    if (foundFile.path) {
-        window.open(foundFile.path, '_blank');
+    // Если есть URL (Vercel Blob)
+    if (foundFile.url || foundFile.path) {
+        window.open(foundFile.url || foundFile.path, '_blank');
         return;
     }
 
-    // Если файл в base64
+    // Если файл в base64 (localStorage)
     if (foundFile.data) {
         const blob = base64ToBlob(foundFile.data, foundFile.type || 'application/pdf');
         const blobUrl = URL.createObjectURL(blob);
@@ -293,7 +242,7 @@ function closeModal() {
     document.body.style.overflow = 'auto';
 }
 
-// Закрытие модального окна при клике вне его
+// Закрытие при клике вне модального окна
 document.addEventListener('click', (e) => {
     const modal = document.getElementById('filesModal');
     if (modal && e.target === modal) {
@@ -301,7 +250,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Закрытие модального окна по Escape
+// Закрытие по Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeModal();
